@@ -35,7 +35,7 @@ func main() {
 	}
 	defer db.Close()
 
-	rabbitMQChannel := getRabbitMQChannel()
+	rabbitMQChannel := getRabbitMQChannel(configs.MQHost, configs.MQPort, configs.MQUser, configs.MQPassword)
 
 	eventDispatcher := events.NewEventDispatcher()
 	eventDispatcher.Register("OrderCreated", &handler.OrderCreatedHandler{
@@ -72,8 +72,10 @@ func main() {
 	http.ListenAndServe(":"+configs.GraphQLServerPort, nil)
 }
 
-func getRabbitMQChannel() *amqp.Channel {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+
+func getRabbitMQChannel(host, port, user, pass string) *amqp.Channel {
+	addr := fmt.Sprintf("amqp://%s:%s@%s:%s", user, pass, host, port)
+	conn, err := amqp.Dial(addr)
 	if err != nil {
 		panic(err)
 	}
