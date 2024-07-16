@@ -61,14 +61,27 @@ func (h *WebOrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WebQueryOrderHandler) Query(w http.ResponseWriter, r *http.Request) {
-	orders, err := h.OrderRepository.FindAll()
+	queryOrder := usecase.NewQueryOrderUseCase(h.OrderRepository)
+	output, err := queryOrder.FindAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = json.NewEncoder(w).Encode(orders)
+
+	err = json.NewEncoder(w).Encode(output)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// orders, err := h.OrderRepository.FindAll()
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+	// err = json.NewEncoder(w).Encode(orders)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
 }
