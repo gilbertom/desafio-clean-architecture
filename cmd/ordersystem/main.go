@@ -8,13 +8,13 @@ import (
 
 	graphql_handler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/devfullcycle/20-CleanArch/configs"
-	"github.com/devfullcycle/20-CleanArch/internal/event/handler"
-	"github.com/devfullcycle/20-CleanArch/internal/infra/graph"
-	"github.com/devfullcycle/20-CleanArch/internal/infra/grpc/pb"
-	"github.com/devfullcycle/20-CleanArch/internal/infra/grpc/service"
-	"github.com/devfullcycle/20-CleanArch/internal/infra/web/webserver"
-	"github.com/devfullcycle/20-CleanArch/pkg/events"
+	"github.com/gilbertom/desafio-clean-architecture/configs"
+	"github.com/gilbertom/desafio-clean-architecture/internal/event/handler"
+	"github.com/gilbertom/desafio-clean-architecture/internal/infra/graph"
+	"github.com/gilbertom/desafio-clean-architecture/internal/infra/grpc/pb"
+	"github.com/gilbertom/desafio-clean-architecture/internal/infra/grpc/service"
+	"github.com/gilbertom/desafio-clean-architecture/internal/infra/web/webserver"
+	"github.com/gilbertom/desafio-clean-architecture/pkg/events"
 	"github.com/go-chi/chi/middleware"
 	"github.com/streadway/amqp"
 	"google.golang.org/grpc"
@@ -44,12 +44,14 @@ func main() {
 	})
 
 	createOrderUseCase := NewCreateOrderUseCase(db, eventDispatcher)
+	// queryOrderUseCase := NewQueryOrderUseCase(db)
 
 	webserver := webserver.NewWebServer(configs.WebServerPort)
 	webserver.Router.Use(middleware.Logger)
 	webOrderHandler := NewWebOrderHandler(db, eventDispatcher)
+	webQueryOrderHandler := NewWebQueryOrderHandler(db)
 	webserver.AddHandler("/order", "POST", webOrderHandler.Create)
-	webserver.AddHandler("/order", "GET", webOrderHandler.Query)
+	webserver.AddHandler("/order", "GET", webQueryOrderHandler.Query)
 	fmt.Println("Starting web server on port", configs.WebServerPort)
 	go webserver.Start()
 

@@ -6,12 +6,12 @@ package main
 import (
 	"database/sql"
 
-	"github.com/devfullcycle/20-CleanArch/internal/entity"
-	"github.com/devfullcycle/20-CleanArch/internal/event"
-	"github.com/devfullcycle/20-CleanArch/internal/infra/database"
-	"github.com/devfullcycle/20-CleanArch/internal/infra/web"
-	"github.com/devfullcycle/20-CleanArch/internal/usecase"
-	"github.com/devfullcycle/20-CleanArch/pkg/events"
+	"github.com/gilbertom/desafio-clean-architecture/internal/entity"
+	"github.com/gilbertom/desafio-clean-architecture/internal/event"
+	"github.com/gilbertom/desafio-clean-architecture/internal/infra/database"
+	"github.com/gilbertom/desafio-clean-architecture/internal/infra/web"
+	"github.com/gilbertom/desafio-clean-architecture/internal/usecase"
+	"github.com/gilbertom/desafio-clean-architecture/pkg/events"
 	"github.com/google/wire"
 )
 
@@ -48,4 +48,20 @@ func NewWebOrderHandler(db *sql.DB, eventDispatcher events.EventDispatcherInterf
 		web.NewWebOrderHandler,
 	)
 	return &web.WebOrderHandler{}
+}
+
+func NewQueryOrderUseCase(db *sql.DB) *usecase.QueryOrderUseCase {
+	wire.Build(
+		setOrderRepositoryDependency,
+		usecase.NewQueryOrderUseCase,
+	)
+	return &usecase.QueryOrderUseCase{}
+}
+
+func NewWebQueryOrderHandler(db *sql.DB) *web.WebQueryOrderHandler {
+	wire.Build(
+		setOrderRepositoryDependency,
+		web.NewWebQueryOrderHandler,
+	)
+	return &web.WebQueryOrderHandler{}
 }

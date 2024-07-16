@@ -4,15 +4,19 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/devfullcycle/20-CleanArch/internal/entity"
-	"github.com/devfullcycle/20-CleanArch/internal/usecase"
-	"github.com/devfullcycle/20-CleanArch/pkg/events"
+	"github.com/gilbertom/desafio-clean-architecture/internal/entity"
+	"github.com/gilbertom/desafio-clean-architecture/internal/usecase"
+	"github.com/gilbertom/desafio-clean-architecture/pkg/events"
 )
 
 type WebOrderHandler struct {
 	EventDispatcher   events.EventDispatcherInterface
 	OrderRepository   entity.OrderRepositoryInterface
 	OrderCreatedEvent events.EventInterface
+}
+
+type WebQueryOrderHandler struct {
+	OrderRepository   entity.OrderRepositoryInterface
 }
 
 func NewWebOrderHandler(
@@ -24,6 +28,14 @@ func NewWebOrderHandler(
 		EventDispatcher:   EventDispatcher,
 		OrderRepository:   OrderRepository,
 		OrderCreatedEvent: OrderCreatedEvent,
+	}
+}
+
+func NewWebQueryOrderHandler(
+	OrderRepository entity.OrderRepositoryInterface,
+) *WebQueryOrderHandler {
+	return &WebQueryOrderHandler{
+		OrderRepository:   OrderRepository,
 	}
 }
 
@@ -48,13 +60,15 @@ func (h *WebOrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *WebOrderHandler) Query(w http.ResponseWriter, r *http.Request) {
-	var dto usecase.OrderInputDTO
-	err := json.NewDecoder(r.Body).Decode(&dto)
+func (h *WebQueryOrderHandler) Query(w http.ResponseWriter, r *http.Request) {
+	orders, err := h.OrderRepository.FindAll()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(dto)
+	err = json.NewEncoder(w).Encode(orders)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

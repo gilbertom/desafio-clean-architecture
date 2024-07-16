@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 
-	"github.com/devfullcycle/20-CleanArch/internal/entity"
+	"github.com/gilbertom/desafio-clean-architecture/internal/entity"
 )
 
 type OrderRepository struct {
@@ -33,4 +33,30 @@ func (r *OrderRepository) GetTotal() (int, error) {
 		return 0, err
 	}
 	return total, nil
+}
+
+// FindAll retrieves all orders from the database.
+func (r *OrderRepository) FindAll() ([]entity.Order, error) {
+	var orders []entity.Order
+	query := "SELECT id, price, tax, final_price FROM orders"
+	rows, err := r.Db.Query(query)
+	if err != nil {
+		return orders, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var order entity.Order
+		err := rows.Scan(&order.ID, &order.Price, &order.Tax, &order.FinalPrice)
+		if err != nil {
+			return orders, err
+		}
+		orders = append(orders, order)
+	}
+
+	if err = rows.Err(); err != nil {
+		return orders, err
+	}
+
+	return orders, nil
 }
