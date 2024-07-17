@@ -44,7 +44,7 @@ func main() {
 	})
 
 	createOrderUseCase := NewCreateOrderUseCase(db, eventDispatcher)
-	// queryOrderUseCase := NewQueryOrderUseCase(db)
+	queryOrderUseCase := NewQueryOrderUseCase(db)
 
 	webserver := webserver.NewWebServer(configs.WebServerPort)
 	webserver.Router.Use(middleware.Logger)
@@ -56,7 +56,7 @@ func main() {
 	go webserver.Start()
 
 	grpcServer := grpc.NewServer()
-	createOrderService := service.NewOrderService(*createOrderUseCase)
+	createOrderService := service.NewOrderService(*createOrderUseCase, *queryOrderUseCase)
 	pb.RegisterOrderServiceServer(grpcServer, createOrderService)
 	reflection.Register(grpcServer)
 
