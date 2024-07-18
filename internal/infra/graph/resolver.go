@@ -8,4 +8,5 @@ import "github.com/gilbertom/desafio-clean-architecture/internal/usecase"
 
 type Resolver struct {
 	CreateOrderUseCase usecase.CreateOrderUseCase
+	QueryOrderUseCase usecase.QueryOrderUseCase
 }
