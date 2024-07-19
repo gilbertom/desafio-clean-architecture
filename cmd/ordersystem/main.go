@@ -3,8 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
+	"time"
 
 	graphql_handler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -80,14 +82,82 @@ func main() {
 
 
 func getRabbitMQChannel(host, port, user, pass string) *amqp.Channel {
-	addr := fmt.Sprintf("amqp://%s:%s@%s:%s", user, pass, host, port)
-	conn, err := amqp.Dial(addr)
-	if err != nil {
-		panic(err)
-	}
-	ch, err := conn.Channel()
-	if err != nil {
-		panic(err)
-	}
-	return ch
+    addr := fmt.Sprintf("amqp://%s:%s@%s:%s", user, pass, host, port)
+    log.Println("Connecting to RabbitMQ at", addr)
+    var conn *amqp.Connection
+    var err error
+
+    for i := 0; i < 5; i++ {
+        conn, err = amqp.Dial(addr)
+        if err == nil {
+            break
+        }
+        log.Printf("Failed to connect to RabbitMQ, retrying in 5 seconds... (%d/5)\n", i+1)
+        time.Sleep(10 * time.Second)
+    }
+
+    if err != nil {
+        panic(fmt.Sprintf("Failed to connect to RabbitMQ after 5 attempts: %v", err))
+    }
+
+    ch, err := conn.Channel()
+    if err != nil {
+        panic(fmt.Sprintf("Failed to open a channel: %v", err))
+    }
+
+		err = setupRabbitMQ(conn)
+		if err != nil {
+			panic(fmt.Sprintf("Failed to setup RabbitMQ: %v", err))
+		}
+
+		return ch
+}
+
+func setupRabbitMQ(conn *amqp.Connection) error {
+    channel, err := conn.Channel()
+    if err != nil {
+        return fmt.Errorf("failed to open a channel: %v", err)
+    }
+    defer channel.Close()
+
+    // Declare the exchange
+    err = channel.ExchangeDeclare(
+        "amq.direct", // name
+        "direct",     // type
+        true,         // durable
+        false,        // auto-deleted
+        false,        // internal
+        false,        // no-wait
+        nil,          // arguments
+    )
+    if err != nil {
+        return fmt.Errorf("failed to declare exchange: %v", err)
+    }
+
+    // Declare the queue
+    _, err = channel.QueueDeclare(
+        "order", // name
+        true,    // durable
+        false,   // delete when unused
+        false,   // exclusive
+        false,   // no-wait
+        nil,     // arguments
+    )
+    if err != nil {
+        return fmt.Errorf("failed to declare queue: %v", err)
+    }
+
+    // Bind the queue to the exchange
+    err = channel.QueueBind(
+        "order",      // queue name
+        "order",      // routing key
+        "amq.direct", // exchange
+        false,
+        nil,
+    )
+    if err != nil {
+        return fmt.Errorf("failed to bind queue: %v", err)
+    }
+
+    return nil
 }
